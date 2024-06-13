@@ -1,71 +1,134 @@
-# codestructexplorer README
+# List Functions VSCode Extension
 
-This is the README for your extension "codestructexplorer". After writing up a brief description, we recommend including the following sections.
+## Description
+
+The **List Functions** extension for Visual Studio Code allows you to list all functions (including arrow functions) defined in JavaScript and TypeScript files within a selected folder. The results are displayed in a new tab and automatically copied to the clipboard.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- List all functions in JavaScript and TypeScript files within a selected folder.
+- Automatically copy the list of functions to the clipboard.
+- Display the list of functions in a new webview tab.
 
-For example if there is an image subfolder under your extension project workspace:
+## Installation
 
-\!\[feature X\]\(images/feature-x.png\)
+### Prerequisites
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- Node.js and npm installed
+- Visual Studio Code installed
 
-## Requirements
+### Steps
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+1. **Clone the repository:**
 
-## Extension Settings
+   ```bash
+   git clone https://github.com/yourusername/list-functions
+   cd list-functions
+   ```
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+2. **Install dependencies:**
 
-For example:
+   ```bash
+   npm install
+   ```
 
-This extension contributes the following settings:
+3. **Compile the extension:**
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+   ```bash
+   npm run compile
+   ```
 
-## Known Issues
+4. **Package the extension:**
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+   ```bash
+   npm install -g vsce
+   vsce package
+   ```
 
-## Release Notes
+5. **Install the extension in VSCode:**
 
-Users appreciate release notes as you update your extension.
+   - Open VSCode.
+   - Go to the Extensions view by clicking on the Extensions icon in the Activity Bar or by pressing `Ctrl+Shift+X` (or `Cmd+Shift+X` on macOS).
+   - Click on the ellipsis (`...`) in the top-right corner of the Extensions view.
+   - Select `Install from VSIX...`.
+   - Navigate to and select the generated `.vsix` file (e.g., `list-functions-0.0.1.vsix`).
 
-### 1.0.0
+## Usage
 
-Initial release of ...
+1. **Open a folder** in VSCode.
 
-### 1.0.1
+2. **Right-click on a folder** in the Explorer pane.
 
-Fixed issue #.
+3. **Select `List Functions from Explorer`** from the context menu.
 
-### 1.1.0
+4. **View the list of functions** in the new tab that opens and note that the list has been copied to the clipboard.
 
-Added features X, Y, and Z.
+## Development
 
----
+### Prerequisites
 
-## Following extension guidelines
+- Node.js and npm installed
+- Visual Studio Code installed
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
+### Steps
 
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
+1. **Clone the repository:**
 
-## Working with Markdown
+   ```bash
+   git clone https://github.com/yourusername/list-functions
+   cd list-functions
+   ```
 
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
+2. **Install dependencies:**
 
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
+   ```bash
+   npm install
+   ```
 
-## For more information
+3. **Open the project in VSCode:**
 
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
+   ```bash
+   code .
+   ```
 
-**Enjoy!**
+4. **Compile the extension:**
+
+   ```bash
+   npm run compile
+   ```
+
+5. **Run the extension in development mode:**
+
+   - Press `F5` to open a new VSCode window with the extension loaded.
+
+6. **Make changes and test** your extension.
+
+## Contributing
+
+1. **Fork the repository.**
+
+2. **Create a new branch:**
+
+   ```bash
+   git checkout -b my-feature-branch
+   ```
+
+3. **Make your changes.**
+
+4. **Commit your changes:**
+
+   ```bash
+   git commit -m 'Add some feature'
+   ```
+
+5. **Push to the branch:**
+
+   ```bash
+   git push origin my-feature-branch
+   ```
+
+6. **Submit a pull request.**
+
+## License
+
+MIT License. See the [LICENSE](LICENSE) file for more details.
