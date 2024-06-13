@@ -12,7 +12,8 @@ export function activate(context: vscode.ExtensionContext) {
     (uri: vscode.Uri) => {
       if (uri && uri.fsPath) {
         console.log('Command "extension.listFunctionsFromExplorer" executed.');
-        openWebview(context, uri.fsPath);
+        const folderName = path.basename(uri.fsPath);
+        openWebview(context, uri.fsPath, folderName);
       } else {
         vscode.window.showErrorMessage(
           "Please select a valid folder in VSCode"
@@ -24,40 +25,40 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(disposable);
 }
 
-function openWebview(context: vscode.ExtensionContext, folderPath: string) {
+function openWebview(
+  context: vscode.ExtensionContext,
+  folderPath: string,
+  folderName: string
+) {
   const panel = vscode.window.createWebviewPanel(
     "listFunctions",
-    "List Functions",
+    `${folderName} List Functions`,
     vscode.ViewColumn.One,
     {
       enableScripts: true,
     }
   );
 
-  panel.webview.html = getWebviewContent(folderPath);
+  panel.webview.html = getWebviewContent(folderName);
 
   panel.webview.onDidReceiveMessage(
-    (message) => {
+    async (message) => {
       switch (message.command) {
         case "listFunctions":
-          listFunctionsInFolder(
+          const functionsList = await listFunctionsInFolder(
             folderPath,
             message.matchPatterns,
             message.excludePaths
-          ).then((functionsList) => {
-            panel.webview.postMessage({
-              command: "showResults",
-              functionsList,
-            });
-          });
-          return;
+          );
+          panel.webview.postMessage({ command: "showResults", functionsList });
+          break;
         case "copyToClipboard":
           vscode.env.clipboard.writeText(message.text).then(() => {
             vscode.window.showInformationMessage(
               "Function list copied to clipboard."
             );
           });
-          return;
+          break;
       }
     },
     undefined,
@@ -69,7 +70,7 @@ async function listFunctionsInFolder(
   folderPath: string,
   matchPatterns: string[],
   excludePaths: string[]
-) {
+): Promise<string> {
   const files = await listAllFiles(folderPath, matchPatterns, excludePaths);
   let functionsList = "";
   files.forEach((file) => {
@@ -128,7 +129,7 @@ function listFunctions(filePath: string, rootPath: string): string {
   }
 }
 
-function getWebviewContent(folderPath: string): string {
+function getWebviewContent(folderName: string): string {
   return `
         <!DOCTYPE html>
         <html lang="en">
@@ -140,7 +141,7 @@ function getWebviewContent(folderPath: string): string {
         </head>
         <body class="bg-gray-100 font-sans leading-normal tracking-normal">
             <div class="container mx-auto p-4">
-                <h1 class="text-3xl font-bold mb-4 text-gray-900">List Functions in Folder</h1>
+                <h1 class="text-3xl font-bold mb-4 text-gray-900">${folderName} List Functions in Folder</h1>
                 <form id="inputForm" class="mb-4">
                     <div class="mb-4">
                         <label for="matchPatterns" class="block text-gray-700 text-sm font-bold mb-2">Match Patterns (comma separated):</label>
@@ -161,7 +162,7 @@ function getWebviewContent(folderPath: string): string {
             </div>
             <script>
                 const vscode = acquireVsCodeApi();
-                
+
                 function listFunctions() {
                     const matchPatterns = document.getElementById('matchPatterns').value.split(',').map(pattern => pattern.trim());
                     const excludePaths = document.getElementById('excludePaths').value.split(',').map(path => path.trim());

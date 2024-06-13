@@ -15,16 +15,11 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:extension.listFunctions",
     "onCommand:extension.listFunctionsFromExplorer"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "extension.listFunctions",
-        "title": "List Functions in JS/TS Files"
-      },
       {
         "command": "extension.listFunctionsFromExplorer",
         "title": "List Functions from Explorer"
