@@ -11,7 +11,10 @@ export function activate(context: vscode.ExtensionContext) {
     "extension.listFunctionsFromExplorer",
     (uri: vscode.Uri) => {
       if (uri && uri.fsPath) {
-        console.log('Command "extension.listFunctionsFromExplorer" executed.');
+        console.log(
+          'Command "extension.listFunctionsFromExplorer" executed with URI:',
+          uri.fsPath
+        );
         const folderName = path.basename(uri.fsPath);
         openWebview(context, uri.fsPath, folderName);
       } else {
@@ -43,13 +46,16 @@ function openWebview(
 
   panel.webview.onDidReceiveMessage(
     async (message) => {
+      console.log("Received message from webview:", message);
       switch (message.command) {
         case "listFunctions":
+          panel.webview.postMessage({ command: "showLoader" });
           const functionsList = await listFunctionsInFolder(
             folderPath,
             message.matchPatterns,
             message.excludePaths
           );
+          panel.webview.postMessage({ command: "hideLoader" });
           panel.webview.postMessage({ command: "showResults", functionsList });
           break;
         case "copyToClipboard":
@@ -71,6 +77,7 @@ async function listFunctionsInFolder(
   matchPatterns: string[],
   excludePaths: string[]
 ): Promise<string> {
+  console.log("Listing functions in folder:", folderPath);
   const files = await listAllFiles(folderPath, matchPatterns, excludePaths);
   let functionsList = "";
   files.forEach((file) => {
@@ -93,7 +100,7 @@ async function listAllFiles(
       const fullPath = path.join(dir, entry.name);
       if (
         entry.isDirectory() &&
-        !excludePaths.some((exclude) => fullPath.includes(exclude))
+        !excludePaths.some((exclude) => fullPath.match(new RegExp(exclude)))
       ) {
         await readDirRecursively(fullPath);
       } else if (
@@ -106,6 +113,7 @@ async function listAllFiles(
   }
 
   await readDirRecursively(folderPath);
+  console.log("Found files:", files);
   return files;
 }
 
@@ -113,13 +121,16 @@ function listFunctions(filePath: string, rootPath: string): string {
   try {
     const data = fs.readFileSync(filePath, "utf8");
     const functionPattern =
-      /(function\s+\w+\s*\([^)]*\)\s*{|const\s+\w+\s*=\s*\([^)]*\)\s*=>\s*{|let\s+\w+\s*=\s*\([^)]*\)\s*=>\s*{)/g;
+      /(function\s+\w+\s*\([^)]*\)\s*|const\s+\w+\s*=\s*\([^)]*\)\s*=>\s*|let\s+\w+\s*=\s*\([^)]*\)\s*=>\s*)/g;
     const matches = data.match(functionPattern);
 
     const relativePath = path.relative(rootPath, filePath);
 
     if (matches) {
-      return `${relativePath}:\n${matches.join("\n")}\n\n`;
+      const cleanMatches = matches.map((match) =>
+        match.replace(/\s*=>\s*|{\s*$/g, "")
+      );
+      return `${relativePath}:\n${cleanMatches.join("\n")}\n\n`;
     } else {
       return `No functions found in ${relativePath}\n\n`;
     }
@@ -138,6 +149,26 @@ function getWebviewContent(folderName: string): string {
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>List Functions</title>
             <script src="https://cdn.tailwindcss.com"></script>
+            <style>
+                .loader {
+                    border: 16px solid #f3f3f3;
+                    border-radius: 50%;
+                    border-top: 16px solid #3498db;
+                    width: 120px;
+                    height: 120px;
+                    animation: spin 2s linear infinite;
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    transform: translate(-50%, -50%);
+                    display: none;
+                }
+                
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
         </head>
         <body class="bg-gray-100 font-sans leading-normal tracking-normal">
             <div class="container mx-auto p-4">
@@ -145,11 +176,11 @@ function getWebviewContent(folderName: string): string {
                 <form id="inputForm" class="mb-4">
                     <div class="mb-4">
                         <label for="matchPatterns" class="block text-gray-700 text-sm font-bold mb-2">Match Patterns (comma separated):</label>
-                        <input type="text" id="matchPatterns" name="matchPatterns" value=".js,.tsx" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <input type="text" id="matchPatterns" name="matchPatterns" value=".js,.ts,.tsx" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
                     </div>
                     <div class="mb-4">
                         <label for="excludePaths" class="block text-gray-700 text-sm font-bold mb-2">Exclude Paths (comma separated):</label>
-                        <input type="text" id="excludePaths" name="excludePaths" value="node_modules,test,.git" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+                        <input type="text" id="excludePaths" name="excludePaths" value="node_modules,.git,dist,build,logs,.github" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" />
                     </div>
                     <div class="flex items-center justify-between">
                         <button type="button" onclick="listFunctions()" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Confirm</button>
@@ -158,27 +189,39 @@ function getWebviewContent(folderName: string): string {
                         </button>
                     </div>
                 </form>
+                <div class="loader" id="loader"></div>
                 <pre id="results" class="bg-white shadow-md rounded p-4 text-gray-800 overflow-x-auto"></pre>
             </div>
             <script>
                 const vscode = acquireVsCodeApi();
-
+                
                 function listFunctions() {
                     const matchPatterns = document.getElementById('matchPatterns').value.split(',').map(pattern => pattern.trim());
                     const excludePaths = document.getElementById('excludePaths').value.split(',').map(path => path.trim());
+                    console.log('Sending message to extension:', { command: 'listFunctions', matchPatterns, excludePaths });
+                    document.getElementById('loader').style.display = 'block';
                     vscode.postMessage({ command: 'listFunctions', matchPatterns, excludePaths });
                 }
 
                 function copyToClipboard() {
                     const results = document.getElementById('results').textContent;
+                    console.log('Copying results to clipboard:', results);
                     vscode.postMessage({ command: 'copyToClipboard', text: results });
                 }
 
                 window.addEventListener('message', event => {
                     const message = event.data;
+                    console.log('Received message from extension:', message);
                     switch (message.command) {
                         case 'showResults':
                             document.getElementById('results').textContent = message.functionsList;
+                            document.getElementById('loader').style.display = 'none';
+                            break;
+                        case 'showLoader':
+                            document.getElementById('loader').style.display = 'block';
+                            break;
+                        case 'hideLoader':
+                            document.getElementById('loader').style.display = 'none';
                             break;
                     }
                 });
