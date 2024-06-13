@@ -102,7 +102,7 @@ function listFunctions(filePath: string, rootPath: string): string {
     const relativePath = path.relative(rootPath, filePath);
 
     if (matches) {
-      return `Functions in ${relativePath}:\n${matches.join("\n")}\n\n`;
+      return `${relativePath}:\n${matches.join("\n")}\n\n`;
     } else {
       return `No functions found in ${relativePath}\n\n`;
     }
