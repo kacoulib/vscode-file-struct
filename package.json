@@ -1,0 +1,56 @@
+{
+  "name": "list-functions",
+  "displayName": "List Functions",
+  "description": "A VSCode extension to list functions in JS/TS files",
+  "version": "0.0.1",
+  "publisher": "your-name",
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:extension.listFunctions",
+    "onCommand:extension.listFunctionsFromExplorer"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.listFunctions",
+        "title": "List Functions in JS/TS Files"
+      },
+      {
+        "command": "extension.listFunctionsFromExplorer",
+        "title": "List Functions from Explorer"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "extension.listFunctionsFromExplorer",
+          "when": "resourceLangId == ''",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^10.17.60",
+    "@types/vscode": "^1.51.0",
+    "tslint": "^5.20.0",
+    "typescript": "^3.9.10",
+    "vscode": "^1.1.37",
+    "vscode-test": "^1.6.1"
+  }
+}
