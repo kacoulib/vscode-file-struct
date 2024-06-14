@@ -30,7 +30,7 @@
         {
           "command": "extension.listFunctionsFromExplorer",
           "when": "explorerResourceIsFolder",
-          "group": "navigation"
+          "group": "z_commands"
         }
       ]
     }
